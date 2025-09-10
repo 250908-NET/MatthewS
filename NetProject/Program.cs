@@ -252,9 +252,15 @@ app.MapGet("/date/daysbetween/{date1}/{date2}", (string date1, string date2) =>
     return $"The total number of days between {date1} and {date2} is {(int)dayDifference}";
 
 });
-app.MapGet("/date/weekday/{date}", (string date1) =>
+app.MapGet("/date/weekday/{date}", (string date) =>
 {
-    
+    string[] SplitDate = date.Split("-");
+
+    DateTime DateVar = new DateTime(int.Parse(SplitDate[2]), int.Parse(SplitDate[0]), int.Parse(SplitDate[1]));
+
+    string[] days_of_the_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+    return $"today is a {days_of_the_week[(int)DateVar.DayOfWeek - 1]}";
 });
 app.MapGet("/", () =>
 {
