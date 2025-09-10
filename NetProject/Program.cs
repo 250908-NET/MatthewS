@@ -1,6 +1,9 @@
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Numerics;
+using System.Security.Cryptography;
+using System.Transactions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+List<string> FavColors = new List<string> {"green", "black", "grey", "purple", "yellow"};
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -265,7 +269,38 @@ app.MapGet("/date/weekday/{date}", (string date) =>
 /*
 Challenge 5
 */
-
+app.MapGet("/colors", () =>
+{
+    return FavColors;
+});
+// return a random color
+app.MapGet("/colors/random", () =>
+{
+    return FavColors[Random.Shared.Next(FavColors.Count)]; // using Random to always print a different color
+});
+// return color starting with that letter
+app.MapGet("/colors/search/{letter}", (string letter) =>
+{
+    List<string> colors = new List<string>();
+    if (letter.Length > 1)
+    {
+        return Results.Ok("enter only one letter");
+    }
+    for (int i = 0; i < FavColors.Count; i++)
+    {
+        if (FavColors[i].IndexOf(letter) == 0)
+        {
+            colors.Add(FavColors[i]);
+        }
+    }
+    return Results.Ok(colors);
+});
+// Post a new color
+app.MapGet("/colors/add/{color}", (string color) =>
+{
+    FavColors.Add(color);
+    return Results.Ok(new {message = "Color added", FavColors});
+});
 app.MapGet("/", () =>
 {
     return "Hello World";
