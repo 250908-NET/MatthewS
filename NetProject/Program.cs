@@ -262,6 +262,10 @@ app.MapGet("/date/weekday/{date}", (string date) =>
 
     return $"today is a {days_of_the_week[(int)DateVar.DayOfWeek - 1]}";
 });
+/*
+Challenge 5
+*/
+
 app.MapGet("/", () =>
 {
     return "Hello World";
