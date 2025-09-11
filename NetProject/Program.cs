@@ -3,7 +3,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Numerics;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using System.Transactions;
+using Microsoft.OpenApi.Writers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +28,7 @@ var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly",null, "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
+
 
 // http get Request
 app.MapGet("/weatherforecast", () =>
@@ -299,7 +302,215 @@ app.MapGet("/colors/search/{letter}", (string letter) =>
 app.MapGet("/colors/add/{color}", (string color) =>
 {
     FavColors.Add(color);
-    return Results.Ok(new {message = "Color added", FavColors});
+    return Results.Ok(new { message = "Color added", FavColors });
+});
+//Challenge 6: Temperature Converter
+static double FToC(double temp)
+{
+    return ((temp - 32) * (5 / 9));
+}
+static double CToF(double temp)
+{
+    return ((temp * (9 / 5)) + 32);
+}
+static double KToC(double temp)
+{
+    return (temp - 273.15);
+}
+static double CToK(double temp)
+{
+    return (temp + 273.15);
+}
+// Convert celcius to fahrenheit
+app.MapGet("/temp/celsius-to-fahrenheit/{temp}", (double temp) =>
+{
+    return CToF(temp);
+});
+// Convert fahrenheit to celcius
+app.MapGet("/temp/fahrenheit-to-celsius/{temp}", (double temp) =>
+{
+    return FToC(temp);
+});
+// Convert kelvin to celsius
+app.MapGet("/temp/kelvin-to-celsius/{temp}", (double temp) =>
+{
+    return KToC(temp);
+});
+// Convert celsius to kelvin
+app.MapGet("/temp/celsius-to-kelvin/{temp}", (double temp) =>
+{
+    return CToK(temp);
+});
+app.MapGet("/temp/compare/{temp1}/{unit1}/{temp2}/{unit2}", (double temp1, string unit1, double temp2, string unit2) =>
+{
+    if (unit1 != "fahrenheit" && unit1 != "celsius" && unit1 != "kelvin" && unit2 != "fahrenheit" && unit2 != "celsius" && unit2 != "kelvin")
+    {
+        return Results.Ok(new { Error = $"{unit1} and {unit2} is not the correct units, enter fahrenheit, celsius, and kelvin" });
+    }
+    if (unit1 != "fahrenheit" && unit1 != "celsius" && unit1 != "kelvin")
+    {
+        return Results.Ok(new { Error = $"{unit1} is not the correct units, enter fahrenheit, celsius, and kelvin" });
+    }
+    if (unit2 != "fahrenheit" && unit2 != "celsius" && unit2 != "kelvin")
+    {
+        return Results.Ok(new { Error = $"{unit2} is not the correct units, enter fahrenheit, celsius, and kelvin" });
+    }
+    double Convert1 = temp1;
+    double Convert2 = temp2;
+
+    if (unit1 == "fahrenheit")
+    {
+        Convert1 = FToC(Convert1);
+    }
+    if (unit1 == "kelvin")
+    {
+        Convert1 = KToC(Convert1);
+    }
+    if (unit2 == "fahrenheit")
+    {
+        Convert2 = FToC(Convert2);
+    }
+    if (unit2 == "kelvin")
+    {
+        Convert2 = KToC(Convert2);
+    }
+
+    if (Convert1 > Convert2)
+    {
+        return Results.Ok(new { Message = $"{unit1} is higher than {unit2}" });
+    }
+    else if (Convert1 < Convert2)
+    {
+        return Results.Ok(new { Message = $"{unit1} is less than {unit2}" });
+    }
+    else
+    {
+        return Results.Ok(new { Message = $"{unit1} is equal to {unit2}" });
+    }
+});
+//Challenge 7: Password Generator
+// List of characters, up and low, and number in the ones
+List<char> randomLetNumber = Enumerable.Range(0, 26).Select(x => (char)('a' + x)).ToList();
+randomLetNumber.AddRange(Enumerable.Range(0, 26).Select(x => (char)('A' + x)).ToList());
+randomLetNumber.AddRange(Enumerable.Range(0, 10).Select(x => (char)('0' + x)).ToList());
+// generate a simple password with just letters and numbers
+app.MapGet("/password/simple/{length}", (int length) =>
+{
+    Random random = new Random();
+    string password = "";
+    for (int i = 0; i < length; i++)
+    {
+        password += randomLetNumber[random.Next(randomLetNumber.Count)];
+    }
+    return Results.Ok(new { Message = $"your password is {password}" });
+
+});
+// generate a complex password which will include special characters
+List<char> randomLetNumSpec = new List<char>(randomLetNumber);
+randomLetNumSpec.AddRange(new char[] { '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+', '[', ']', '{', '}', ';', ':', ',', '.', '<', '>', '/', '?' });
+app.MapGet("/password/complex/{length}", (int length) =>
+{
+    Random random = new Random();
+    string password = "";
+    for (int i = 0; i < length; i++)
+    {
+        password += randomLetNumSpec[random.Next(randomLetNumSpec.Count)];
+    }
+    return Results.Ok(new { Message = $"your password is {password}" });
+
+});
+List<string> wordList = new List<string> { "apple", "banana", "cherry", "date", "elderberry", "fig", "grape", "honeydew", "kiwi", "lemon", "mango", "nectarine", "orange", "papaya", "quince", "raspberry", "strawberry", "tangerine", "ugli", "vanilla", "watermelon" };
+// generate a memorable password with just words
+app.MapGet("/password/memorable/{words}", (int words) =>
+{
+    Random random = new Random();
+    string phrase = "";
+    for (int i = 0; i < words; i++)
+    {
+        if (i == words - 1)
+        {
+            phrase += wordList[random.Next(wordList.Count)];
+        }
+        else
+        {
+            phrase += wordList[random.Next(wordList.Count)] + " ";
+        }
+    }
+    return Results.Ok(new { Message = $"{phrase}" });
+});
+// rates password stregnth
+List<char> bigNum = Enumerable.Range(0, 26).Select(x => (char)('A' + x)).ToList();
+List<char> specialChar = new List<char>();
+specialChar.AddRange(new char[] { '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+', '[', ']', '{', '}', ';', ':', ',', '.', '<', '>', '/', '?' });
+app.MapGet("/password/strength/{password}", (string password) =>
+{
+    double entropy = 0;
+    double passStrength = 0;
+    if (password.Any(c => char.IsUpper(c)) && password.Any(c => specialChar.Contains(c)))
+    {
+        passStrength += 62;
+    }
+    else
+    {
+        passStrength += 26;
+    }
+
+    entropy = password.Length * Math.Log(passStrength);
+    if (entropy < 40)
+    {
+        return Results.Ok(new { Message = $"your password is weak" });
+    }
+    else if (entropy < 60)
+    {
+        return Results.Ok(new { Message = $"your password is moderate" });
+    }
+    else if (entropy < 80)
+    {
+        return Results.Ok(new { Message = $"your password is Strong" });
+    }
+    else if (entropy < 100)
+    {
+        return Results.Ok(new { Message = $"your password is very strong" });
+    }
+    else
+    {
+        return Results.Ok(new { Message = $"your password is unbreakable" });
+    }
+
+});
+// Challenge 8: Simple Validator
+List<String> DNE = new List<String>([".com", ".net", ".org", ".me", ".name", ".email", ".xyz", ".online", ".tech", ".info", ".io", ".co",".us",".ca",".de"]);
+// basic email format validation
+app.MapGet("/validate/email/{email}", (string email) =>
+{
+    if (email.Contains('@') && DNE.Any(dne => email.EndsWith(dne)))
+    {
+        return Results.Ok(new { Message = $"Valid email" });
+    }
+    else
+    {
+        return Results.Ok(new { Message = $"Invalid email" });
+    }
+});
+// phone number format
+List<char> bigSmallSpecNumber = Enumerable.Range(0, 26).Select(x => (char)('a' + x)).ToList();
+bigSmallSpecNumber.AddRange(Enumerable.Range(0, 26).Select(x => (char)('A' + x)).ToList());
+bigSmallSpecNumber.AddRange(new char[] { '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+', '[', ']', '{', '}', ';', ':', ',', '.', '<', '>', '/', '?' });
+string phonePattern = @"^\d{3}-\d{3}-\d{4}$";
+app.MapGet("/validate/phone/{phone}", (string phone) =>
+{
+    if (Regex.IsMatch(phone, phonePattern) && !phone.Any(c => bigSmallSpecNumber.Any(t => (t == c) && (c != '-'))))
+    {
+        return Results.Ok(new { Message = $"Valid phone number" });
+    }
+    else
+    {
+        return Results.Ok(new { Message = $"Invalid phone number" });
+    }
+});
+app.MapGet("/validate/creditcard/{number}", (int number) =>
+{
+
 });
 app.MapGet("/", () =>
 {
