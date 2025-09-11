@@ -1,17 +1,24 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Diagnostics.Metrics;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Transactions;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.OpenApi.Writers;
+using NetProject.model;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing.Template;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 List<string> FavColors = new List<string> {"green", "black", "grey", "purple", "yellow"};
@@ -20,30 +27,21 @@ List<string> FavColors = new List<string> {"green", "black", "grey", "purple", "
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
 var summaries = new[]
 {
-    "Freezing", "Bracing", "Chilly",null, "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
 
+
 // http get Request
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+
 /*
     Challenge 1:
     basic operations
@@ -564,6 +562,315 @@ app.MapGet("/validate/strongpassword/{password}", (string password) =>
 
 
 });
+// Challenge 9: Unit Converter
+// Work with differentr Measuremnt systems
+static double MetersToFeet(double value)
+{
+    return value * 3.28;
+}
+static double FeetToInches(double value)
+{
+    return value * 12;
+}
+static double InchesToFeet(double value)
+{
+    return value / 12;
+}
+static double FeetToMeters(double value)
+{
+    return value / 3.28;
+}
+app.MapGet("/convert/length/{value}/{fromUnit}/{toUnit}", (double value, string fromUnit, string toUnit) =>
+{
+    double result = 0;
+    if (fromUnit.ToLower() != "meters" && fromUnit.ToLower() != "feet" && fromUnit.ToLower() != "inches" && toUnit.ToLower() != "meters" && toUnit.ToLower() != "feet" && toUnit.ToLower() != "inches")
+    {
+        return Results.Ok($"invalid Unit types, enter meters,feet, or inches");
+    }
+    if (fromUnit.ToLower() == toUnit.ToLower())
+    {
+        return Results.Ok($"fromUnit and toUnit can't be the same");
+    }
+    if (fromUnit.ToLower() == "meters")
+    {
+
+        result = MetersToFeet(value);
+        if (toUnit.ToLower() == "inches")
+        {
+            result = FeetToInches(result);
+        }
+    }
+    else if (fromUnit.ToLower() == "feet")
+    {
+        if (toUnit.ToLower() == "inches")
+        {
+            result = FeetToInches(value);
+        }
+        else
+        {
+            result = FeetToMeters(value);
+        }
+    }
+    else
+    {
+        result = InchesToFeet(value);
+        if (toUnit.ToLower() == "meters")
+        {
+            result = FeetToMeters(result);
+        }
+    }
+    return Results.Ok($"{result} in {toUnit}");
+
+});
+// weight
+static double KgToLbs(double value)
+{
+    return value * 2.205;
+}
+static double LbsToOz(double value)
+{
+    return value * 16;
+}
+static double OzToLbs(double value)
+{
+    return value / 16;
+}
+static double LbsToKg(double value)
+{
+    return value / 2.205;
+}
+app.MapGet("/convert/weight/{value}/{fromUnit}/{toUnit}", (double value, string fromUnit, string toUnit) =>
+{
+    double result = 0;
+    if (fromUnit.ToLower() != "kg" && fromUnit.ToLower() != "lbs" && fromUnit.ToLower() != "oz" && toUnit.ToLower() != "kg" && toUnit.ToLower() != "lbs" && toUnit.ToLower() != "oz")
+    {
+        return Results.Ok($"invalid Unit types, enter kg,lbs, or oz");
+    }
+    if (fromUnit.ToLower() == toUnit.ToLower())
+    {
+        return Results.Ok($"fromUnit and toUnit can't be the same");
+    }
+    if (fromUnit.ToLower() == "kg")
+    {
+
+        result = KgToLbs(value);
+        if (toUnit.ToLower() == "oz")
+        {
+            result = LbsToOz(result);
+        }
+    }
+    else if (fromUnit.ToLower() == "lbs")
+    {
+        if (toUnit.ToLower() == "oz")
+        {
+            result = LbsToOz(value);
+        }
+        else
+        {
+            result = LbsToKg(value);
+        }
+    }
+    else
+    {
+        result = OzToLbs(value);
+        if (toUnit.ToLower() == "kg")
+        {
+            result = LbsToKg(result);
+        }
+    }
+    return Results.Ok($"{result} in {toUnit}");
+
+});
+//Volume
+static double LToG(double value)
+{
+    return value / 3.785;
+}
+static double GToC(double value)
+{
+    return value * 16;
+}
+static double CToG(double value)
+{
+    return value / 16;
+}
+static double GToL(double value)
+{
+    return value * 3.785;
+}
+app.MapGet("/convert/volume/{value}/{fromUnit}/{toUnit}", (double value, string fromUnit, string toUnit) =>
+{
+    double result = 0;
+    if (fromUnit.ToLower() != "liters" && fromUnit.ToLower() != "gallons" && fromUnit.ToLower() != "cups" && toUnit.ToLower() != "liters" && toUnit.ToLower() != "gallons" && toUnit.ToLower() != "cups")
+    {
+        return Results.Ok($"invalid Unit types, enter liters,gallons, or cups");
+    }
+    if (fromUnit.ToLower() == toUnit.ToLower())
+    {
+        return Results.Ok($"fromUnit and toUnit can't be the same");
+    }
+    if (fromUnit.ToLower() == "liters")
+    {
+
+        result = LToG(value);
+        if (toUnit.ToLower() == "cups")
+        {
+            result = GToC(result);
+        }
+    }
+    else if (fromUnit.ToLower() == "gallons")
+    {
+        if (toUnit.ToLower() == "cups")
+        {
+            result = GToC(value);
+        }
+        else
+        {
+            result = GToL(value);
+        }
+    }
+    else
+    {
+        result = CToG(value);
+        if (toUnit.ToLower() == "liters")
+        {
+            result = GToL(result);
+        }
+    }
+    return Results.Ok($"{result} in {toUnit}");
+
+});
+// list
+app.MapGet("/convert/list-units/{type}", (string type) =>
+{
+    if (type == "length")
+    {
+        return Results.Ok(new { Message = "meters, feet, and inches" });
+    }
+    if (type == "weight")
+    {
+        return Results.Ok(new { Message = "kg, lbs, and ounces" });
+    }
+    if (type == "volume")
+    {
+        return Results.Ok(new { Message = "liters, gallons, cups" });
+    }
+    else
+    {
+        return Results.Ok(new { Message = "invalid type" });
+    }
+});
+// Challenge 10
+List<WeatherForecast> forecasts = new List<WeatherForecast>();
+app.MapPost("/weatherforecast", ([FromBody] string message) =>
+{
+    WeatherForecast forecast = new WeatherForecast(DateTime.Now.AddDays(forecasts.Count), Random.Shared.Next(-20, 55), summaries[Random.Shared.Next(summaries.Length)]);
+    forecasts.Add(forecast);
+
+    return Results.Ok(new { Message = "Forecast added", forecasts });
+}).WithName("PostWeatherForecast");
+app.MapGet("/weatherforecast", () =>
+{
+    return forecasts;
+}).WithName("GetWeatherForecast");
+
+// removes a weather by date
+app.MapDelete("/weatherforecast/{date}", (string date) =>
+{
+    date = date.Replace("%2F", "/");
+    forecasts.RemoveAll(f =>
+    {
+        return f.Date.ToString().Contains(date);
+    });
+    return Results.Ok(new { Message = $"Forecasts for {date} deleted" });
+}).WithName("DeleteWeatherForecast");
+
+// Challenge 11: Echo Service
+// create number guessing game
+int guessNumber = Random.Shared.Next(1, 101);
+app.MapPost("/game/guess-number", ([FromBody] int guess) =>
+{
+    if (guess == guessNumber)
+    {
+        guessNumber = Random.Shared.Next(1, 101);
+        return Results.Ok(new { Message = $"HEY, YOU GOT IT RIGHT. \n\n....changing the number." });
+    }
+    else if (guess <= 0 || guess > 100)
+    {
+        return Results.Ok(new { Message = $"Pick a Range from 1 to 100" });
+    }
+    else if (guess > 20 + guessNumber || guess < guessNumber - 20)
+    {
+        return Results.Ok(new { Message = $"You're gettin cold!" });
+    }
+    else if (guess > 5 + guessNumber || guess < guessNumber - 5)
+    {
+        return Results.Ok(new { Message = $"You're gettin warmer!" });
+    }
+    else
+    {
+        return Results.Ok(new { Message = $"YOU'RE RED HOT" });
+    }
+});
+// rock paper scissor
+List<string> rps = new List<string>(["ROCK", "PAPER", "SCISSOR"]);
+app.MapGet("/game/rock-paper-scissors/{choice}", (string choice) =>
+{
+    Random random = new Random();
+    string botChoice = rps[random.Next(rps.Count)];
+    if (!rps.Contains(choice.ToUpper()))
+    {
+        return Results.Ok($"{botChoice}! Hey, thats not how this works!");
+    }
+    if (botChoice == choice.ToUpper())
+    {
+        return Results.Ok($"{botChoice}! Aww, its a Draw!");
+    }
+    else if (rps.IndexOf(botChoice) == ((rps.IndexOf(choice.ToUpper()) + 1) % 3))
+    {
+        return Results.Ok($"{botChoice}! AW YEAH, I WIN!");
+    }
+    else
+    {
+        return Results.Ok($"{botChoice}! DANG IT, I LOST!");
+    }
+
+});
+// roll dice
+app.MapGet("/game/dice/{sides}/{count}", (int sides, int count) =>
+{
+    Random random = new Random();
+    List<int> DiceTotal = new List<int>();
+    for (int i = 0; i < count; i++)
+    {
+        DiceTotal.Add(Random.Shared.Next(1, sides + 1));
+    }
+    return Results.Ok(DiceTotal);
+});
+// coin-flips
+app.MapGet("/game/coin-flip/{count}", (int count) =>
+{
+    var dict = new Dictionary<string, int>();
+    dict["heads"] = 0;
+    dict["tails"] = 0;
+    for (int i = 0; i < count; i++)
+    {
+        if (Random.Shared.Next(0, 2) % 2 == 0)
+        {
+            dict["heads"]++;
+        }
+        else
+        {
+            dict["tails"]++;
+        }
+    }
+    return Results.Ok(dict);
+});
+app.MapPost("/echo", ([FromBody] string message) =>
+{
+    return Results.Ok(message);
+}).WithName("PostEcho");
+
 app.MapGet("/", () =>
 {
     return "Hello World";
@@ -572,7 +879,4 @@ app.MapGet("/", () =>
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary = "NOTHING")
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+

@@ -31,3 +31,6 @@ C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\NetProject\obj\Debug\net
 C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\NetProject\obj\Debug\net9.0\NetProject.pdb
 C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\NetProject\obj\Debug\net9.0\NetProject.genruntimeconfig.cache
 C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\NetProject\obj\Debug\net9.0\ref\NetProject.dll
+C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\NetProject\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
+C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\NetProject\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\NetProject\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
