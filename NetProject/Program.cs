@@ -508,8 +508,60 @@ app.MapGet("/validate/phone/{phone}", (string phone) =>
         return Results.Ok(new { Message = $"Invalid phone number" });
     }
 });
-app.MapGet("/validate/creditcard/{number}", (int number) =>
+// validate Creditcard
+app.MapGet("/validate/creditcard/{number}", (string number) =>
 {
+    int sum = 0;
+    int temp = 0;
+    //luhns algorithm
+    for (int i = number.Length - 2; i >= 0; --i)
+    {
+        temp = int.Parse(number[i].ToString());
+        if ((i + 1) % 2 == 0)
+        {
+            temp *= 2;
+        }
+        if (temp > 9)
+        {
+            temp = (temp % 10) + 1;
+        }
+        sum += temp;
+
+
+    }
+    int last_digit = ((10 - (sum % 10)) % 10);
+    if (last_digit == int.Parse(number[number.Length - 1].ToString()))
+    {
+        return Results.Ok("Valid number");
+    }
+    else
+    {
+        return Results.Ok("invalid number");
+    }
+
+
+});
+// check password rules
+app.MapGet("/validate/strongpassword/{password}", (string password) =>
+{
+    //if statements so we have a correct message for the corresponding issue
+    if (!password.Any(c => char.IsUpper(c)) && !password.Any(c => specialChar.Contains(c)))
+    {
+        return Results.Ok($"Password does not include capital letters or special characters");
+    }
+    else if (!password.Any(c => char.IsUpper(c)))
+    {
+        return Results.Ok($"Password does not include capital letters");
+    }
+    else if (!password.Any(c => specialChar.Contains(c)))
+    {
+        return Results.Ok($"Password does not include special characters");
+    }
+    else
+    {
+        return Results.Ok($"Password is valid");
+    }
+
 
 });
 app.MapGet("/", () =>
