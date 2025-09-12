@@ -297,7 +297,7 @@ app.MapGet("/colors/search/{letter}", (string letter) =>
     return Results.Ok(colors);
 });
 // Post a new color
-app.MapGet("/colors/add/{color}", (string color) =>
+app.MapPost("/colors/add/{color}", ([FromBody] string color) =>
 {
     FavColors.Add(color);
     return Results.Ok(new { message = "Color added", FavColors });
@@ -417,15 +417,17 @@ app.MapGet("/password/complex/{length}", (int length) =>
     return Results.Ok(new { Message = $"your password is {password}" });
 
 });
-List<string> wordList = new List<string> { "apple", "banana", "cherry", "date", "elderberry", "fig", "grape", "honeydew", "kiwi", "lemon", "mango", "nectarine", "orange", "papaya", "quince", "raspberry", "strawberry", "tangerine", "ugli", "vanilla", "watermelon" };
+//List<string> wordList = new List<string> { "apple", "banana", "cherry", "date", "elderberry", "fig", "grape", "honeydew", "kiwi", "lemon", "mango", "nectarine", "orange", "papaya", "quince", "raspberry", "strawberry", "tangerine", "ugli", "vanilla", "watermelon" };
 // generate a memorable password with just words
-app.MapGet("/password/memorable/{words}", (int words) =>
+app.MapGet("/password/memorable/{words}", (string words) =>
 {
     Random random = new Random();
+    List<string> wordList = new List<string>(words.Split(" "));
+    int N = Random.Shared.Next(Random.Shared.Next(1, 20));
     string phrase = "";
-    for (int i = 0; i < words; i++)
+    for (int i = 0; i < N; i++)
     {
-        if (i == words - 1)
+        if (i == N - 1)
         {
             phrase += wordList[random.Next(wordList.Count)];
         }
@@ -433,10 +435,11 @@ app.MapGet("/password/memorable/{words}", (int words) =>
         {
             phrase += wordList[random.Next(wordList.Count)] + " ";
         }
+
     }
     return Results.Ok(new { Message = $"{phrase}" });
 });
-// rates password stregnth
+// rates password strength
 List<char> bigNum = Enumerable.Range(0, 26).Select(x => (char)('A' + x)).ToList();
 List<char> specialChar = new List<char>();
 specialChar.AddRange(new char[] { '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+', '[', ']', '{', '}', ';', ':', ',', '.', '<', '>', '/', '?' });
@@ -511,11 +514,13 @@ app.MapGet("/validate/creditcard/{number}", (string number) =>
 {
     int sum = 0;
     int temp = 0;
+    int counter = 1;
     //luhns algorithm
-    for (int i = number.Length - 2; i >= 0; --i)
+    for (int i = number.Length - 1; i >= 0; i--)
     {
+
         temp = int.Parse(number[i].ToString());
-        if ((i + 1) % 2 == 0)
+        if (counter % 2 == 0)
         {
             temp *= 2;
         }
@@ -524,11 +529,13 @@ app.MapGet("/validate/creditcard/{number}", (string number) =>
             temp = (temp % 10) + 1;
         }
         sum += temp;
+        counter += 1;
 
 
     }
-    int last_digit = ((10 - (sum % 10)) % 10);
-    if (last_digit == int.Parse(number[number.Length - 1].ToString()))
+
+    
+    if (sum % 10 == 0)
     {
         return Results.Ok("Valid number");
     }
@@ -542,26 +549,53 @@ app.MapGet("/validate/creditcard/{number}", (string number) =>
 // check password rules
 app.MapGet("/validate/strongpassword/{password}", (string password) =>
 {
-    //if statements so we have a correct message for the corresponding issue
-    if (!password.Any(c => char.IsUpper(c)) && !password.Any(c => specialChar.Contains(c)))
+    bool falseFlags = false;
+    List<string> notIncluded = new List<string>();
+    string prompt = "Password does not include";
+    //if statements so we have a correct message for the corresponding issue 
+
+    if (!password.Any(char.IsDigit))
     {
-        return Results.Ok($"Password does not include capital letters or special characters");
+        falseFlags = true;
+        notIncluded.Add(" a Number");
     }
-    else if (!password.Any(c => char.IsUpper(c)))
+    if (!password.Any(c => char.IsUpper(c)))
     {
-        return Results.Ok($"Password does not include capital letters");
+        falseFlags = true;
+        notIncluded.Add(" a Capitalized letter");
     }
-    else if (!password.Any(c => specialChar.Contains(c)))
+    if (!password.Any(c => specialChar.Contains(c)))
     {
-        return Results.Ok($"Password does not include special characters");
+        falseFlags = true;
+        notIncluded.Add(" a Special Character");
+    }
+    if (falseFlags)
+    {
+        for (int i = 0; i < notIncluded.Count; i++)
+        {
+            if (i != 0)
+            {
+                prompt += ",";
+            }
+
+            if (i + 1 == notIncluded.Count && notIncluded.Count != 1)
+            {
+                prompt += " and" + notIncluded[i];
+            }
+            else
+            {
+                prompt += notIncluded[i];
+            }
+            
+        }
+        return Results.Ok(prompt);
     }
     else
     {
         return Results.Ok($"Password is valid");
     }
-
-
 });
+
 // Challenge 9: Unit Converter
 // Work with differentr Measuremnt systems
 static double MetersToFeet(double value)
@@ -850,11 +884,13 @@ app.MapGet("/game/dice/{sides}/{count}", (int sides, int count) =>
 // coin-flips
 app.MapGet("/game/coin-flip/{count}", (int count) =>
 {
+    //Dictionaries are sorted by key and value making it better to associate numbers with the amount of heads and tails
     var dict = new Dictionary<string, int>();
     dict["heads"] = 0;
     dict["tails"] = 0;
     for (int i = 0; i < count; i++)
     {
+        // randomly picks 0 or 1 and adds it to heads or tails
         if (Random.Shared.Next(0, 2) % 2 == 0)
         {
             dict["heads"]++;
