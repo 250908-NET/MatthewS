@@ -35,25 +35,35 @@ if (app.Environment.IsDevelopment())
 ToDoServices toDoServices = new ToDoServices();
 Priority priority = new Priority();
 // desplaying all inputs
-app.MapGet("/api/tasks", (bool? completed = null,Priority? priority = null,DateTime? dueBefore = null) => {
-    return Results.Ok(new { success = true, data = toDoServices.filteredDisplay(completed, priority, dueBefore), message = "Tasks Retrieved" });
+app.MapGet("/api/tasks", (string? title, string? description,bool? completed = null,Priority? priority = null,DateTime? dueBefore = null, int page = 0, int pageSize = 0, SortedBy? sorting = null) => {
+    List<string> Error = new List<string>(); 
+    try // try the call to filteredDisplay
+    {
+        return Results.Ok(new { success = true, data = toDoServices.filteredDisplay(title, description, completed, priority, dueBefore, page, pageSize, sorting ?? SortedBy.none), message = "Tasks Retrieved" });
+    }
+    catch (Exception e) // catches errors that happen in the FilterDisplay class and sends the error to the client
+    {
+        Error.Add(e.ToString());
+        return Results.Ok(new { success = false, errors = Error, message = "Operation Failed" }); // sending a error within the filter
+    }
 });
 // returns task with the matching id, informs if there is no Task with the ID
 app.MapGet("/api/tasks/{id}", (ILogger<Program> logger,int id) =>
 {
-    ToDoItem displayId = toDoServices.GetItemById(id);
+    ToDoItem displayId = toDoServices.GetItemById(id); 
     List<string> Error = new List<string>();
-    if (displayId == null)
+    if (displayId == null)// if the id shows nothing after being called
     {
-        Error.add("Could not find Anything with that ID");
+        Error.Add("Could not find Anything with that ID");
     }
     if (Error.Count == 0)
     {
-        return Results.Ok(new { success = true, data = toDoServices.GetItemById(id), message = "Task Found" });
+
+        return Results.Ok(new { success = true, data = toDoServices.GetItemById(id), message = "Task Found" }); // the Task was found
     }
     else
     {
-        return Results.Ok(new { success = false, errors = Error, message = "Operation Failed" });
+        return Results.Ok(new { success = false, errors = Error, message = "Operation Failed" }); // if there is a error
     }
 });
 
@@ -62,15 +72,15 @@ app.MapGet("/api/tasks/{id}", (ILogger<Program> logger,int id) =>
 app.MapPost("/api/tasks", (ILogger<Program> logger,[FromBody] string Title, string? Description = "",Priority? ListPriority = null, DateTime? DueDate = null) =>
 {
     List<string> Error = new List<string>();
-    if (Description.Length >= 500)
+    if (Description.Length >= 500) // Description can not be over 500 characters
     {
-        Error.add("Length is too long");
+        Error.Add("Length is too long");
         return Results.Ok(new { success = false, errors = Error, message = "Operation Failed" });
     }
-    int id = toDoServices.AddItem(Title, Description, ListPriority ?? Priority.Medium, DueDate ?? DateTime.Now);
-    if (Error.Count == 0)
+    int id = toDoServices.AddItem(Title, Description, ListPriority ?? Priority.Medium, DueDate ?? DateTime.Now); // Send to Add Item, default values for DueDate and ListPriority
+    if (Error.Count == 0) 
     {
-        return Results.Ok(new { success = true, data = toDoServices.GetItemById(id), message = "Task Created" });
+        return Results.Ok(new { success = true, data = toDoServices.GetItemById(id), message = "Task Created" }); //Created a Task, send the created task to the client
     }
     else
     {
@@ -81,31 +91,36 @@ app.MapPost("/api/tasks", (ILogger<Program> logger,[FromBody] string Title, stri
 app.MapPut("/api/tasks/{id}", (ILogger<Program> logger,[FromBody] int id, string? title = null,string? Description = null,bool? completed = null,Priority? ListPriority = null,DateTime? DueDate = null) =>
 {
     List<string> Error = new List<string>();
-    if (Description.Length < 500)
+    if (Description.Length < 500) // Description can not be over 500 characters
     {
-        Error.add("Description is too long");
+        Error.Add("Description is too long");
     }
     if (Error.Count == 0)
     {
-        bool result = toDoServices.UpdateTodo(id, title, Description, completed, ListPriority, DueDate);
-        if (Error.Count == 0)
+        bool result = toDoServices.UpdateTodo(id, title, Description, completed, ListPriority, DueDate); // update the Task, bool checks if its correct
+        if (result == false) // if result was not found
         {
-            return Results.Ok(new { success = true, data = toDoServices.GetItemById(id), message = "Task Changed" });
+            Error.Add("Could not find Task with the corresponding id");
         }
+        if (Error.Count == 0)
+            {
+                return Results.Ok(new { success = true, data = toDoServices.GetItemById(id), message = "Task Changed" });
+            }
     }
     return Results.Ok(new { success = false, errors = Error, message = "Operation Failed" });
     
 });
-
+// Delete a Task with the given id
 app.MapDelete("/api/tasks/{id}", (ILogger<Program> logger,int id) => {
-    ToDoItems deletedTask = toDoServices.DeleteItem(id);
-    if (deletedTask == null)
+    ToDoItem deletedTask = toDoServices.DeleteItem(id); // deleted task is sent back, if deleted
+    List<string> Error = new List<string>();
+    if (deletedTask == null) // if deleted task is not found, deletedTask will be null
     {
-        Error.add("This is not Task with that ID");
+        Error.Add("This is not Task with that ID");
     }
     if (Error.Count == 0)
     {
-        return Results.Ok(new { success = true, data = deletedTask, message = "Task Deleted" });
+        return Results.Ok(new { success = true, data = deletedTask, message = "Task Deleted" }); // comfirm deleted task
     }
     
     return Results.Ok(new { success = false, errors = Error, message = "Operation Failed" });

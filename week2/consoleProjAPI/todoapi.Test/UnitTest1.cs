@@ -45,7 +45,8 @@ public class DatabaseFixture : IDisposable
 public class ApiResponse
 {
     public bool success { get; set; }
-    public List<ToDoItem> data { get; set; } = new List<ToDoItem>();
+    public List<ToDoItem>? data { get; set; }
+    public List<string>? errors { get; set; }
     public string? message { get; set; }
 }
 [CollectionDefinition("Api Database collection")]
@@ -65,32 +66,18 @@ public class APItest : IClassFixture<WebApplicationFactory<Program>>
     {
         _client = factory.CreateClient();
         _fixture = fixture;
+
+    }
+    public async Task InitializeTask()
+    {
+        foreach (var task in _fixture.Db)
+        {
+            var response = await _client.PostAsJsonAsync("/api/tasks", task);
+            response.EnsureSuccessStatusCode();
+        }
     }
 
 
-    // [Fact]
-    // public async Task postReceived() // test to discover the test is past
-    // {
-    //     Priority priority = Priority.Medium;
-    //     //Arrange
-    //     var payload = new
-    //     {
-    //         id = 1,
-    //         title = "Hello",
-    //     };
-    //     var jsonContent = JsonConvert.SerializeObject(payload);
-    //     var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-    //     var response = await _client.PostAsync("/api/tasks", content);
-    //     //Act
-    //     response.EnsureSuccessStatusCode();
-
-    //     //Assert
-
-
-    //     var results = await response.Content.ReadFromJsonAsync<ToDoItem>();
-
-    //     Assert.IsType<ToDoItem>(results);
-    // }
     [Fact]
     public async Task DisplayTasks()
     {
@@ -114,7 +101,7 @@ public class APItest : IClassFixture<WebApplicationFactory<Program>>
 
         response.EnsureSuccessStatusCode(); // Status Code 200-299
         apiResponse.data.Should().BeEquivalentTo(Tasks, options => options.Excluding(t => t.Id).Excluding(t => t.CreatedAt).Excluding(t => t.UpdatedAt).Excluding(t => t.DueDate));
-        for(int i = 0; i < apiResponse.data.Count; i++)
+        for (int i = 0; i < apiResponse.data.Count; i++)
         {
             Assert.Equal(Tasks[i].DueDate, apiResponse.data[i].DueDate, TimeSpan.FromSeconds(1));
         }
@@ -122,5 +109,6 @@ public class APItest : IClassFixture<WebApplicationFactory<Program>>
 
 
     }
+    public Task DisposeAsync() => Task.CompletedTask;
 
 }
