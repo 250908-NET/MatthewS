@@ -68,12 +68,13 @@ public class APItest : IClassFixture<WebApplicationFactory<Program>>
         _fixture = fixture;
 
     }
+    
     public async Task InitializeTask()
     {
         foreach (var task in _fixture.Db)
         {
-            var response = await _client.PostAsJsonAsync("/api/tasks", task);
-            response.EnsureSuccessStatusCode();
+            var url = $"/api/tasks?Description={Uri.EscapeDataString(task.Description)}&ListPriority={(int)task.ListPriority}&DueDate={task.DueDate}";
+            var postResponse = await _client.PostAsJsonAsync(url, task.Title);
         }
     }
 
@@ -82,16 +83,15 @@ public class APItest : IClassFixture<WebApplicationFactory<Program>>
     public async Task DisplayTasks()
     {
         // Given
-        var Tasks = _fixture.Db.Where(t => t.IsCompleted == false).ToList();
-        Console.WriteLine("Tasks Count: " + Tasks.Count);
-        foreach (var task in Tasks)
-        {
 
+        var Tasks = _fixture.Db.Where(t => t.IsCompleted == false).ToList();
+        foreach (var task in _fixture.Db)
+        {
             var url = $"/api/tasks?Description={Uri.EscapeDataString(task.Description)}&ListPriority={(int)task.ListPriority}&DueDate={task.DueDate}";
             var postResponse = await _client.PostAsJsonAsync(url, task.Title);
             postResponse.EnsureSuccessStatusCode();
-
         }
+        Console.WriteLine("Tasks Count: " + Tasks.Count);
         var response = await _client.GetAsync("/api/tasks");
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse>();
 
@@ -108,6 +108,24 @@ public class APItest : IClassFixture<WebApplicationFactory<Program>>
         // Assert that Tasks are match the database
 
 
+    }
+    [Fact]
+    public async Task PageTooHigh()
+    {
+
+        List<string> ErrorStatus = new List<string>();
+        ErrorStatus.Add("Page Size times the number of pages are too high");
+        /*
+            if the db size is equal or greater than (page-1) * pageSize
+            this means there is no enough task for the selected page to exist
+        */
+        var testResponse = await _client.GetAsync("/api/tasks");
+        var testApiResponse = await testResponse.Content.ReadFromJsonAsync<ApiResponse>();
+        var response = await _client.GetAsync("/api/tasks?page=4&pageSize=4");
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+        response.EnsureSuccessStatusCode();
+        apiResponse.errors.Should().BeEquivalentTo(ErrorStatus);
     }
     public Task DisposeAsync() => Task.CompletedTask;
 

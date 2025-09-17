@@ -43,7 +43,7 @@ app.MapGet("/api/tasks", (string? title, string? description,bool? completed = n
     }
     catch (Exception e) // catches errors that happen in the FilterDisplay class and sends the error to the client
     {
-        Error.Add(e.ToString());
+        Error.Add(e.Message.ToString());
         return Results.Ok(new { success = false, errors = Error, message = "Operation Failed" }); // sending a error within the filter
     }
 });

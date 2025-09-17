@@ -59,15 +59,16 @@ public class ToDoServices : IToDoServices
         // if pages are implemented, only display page x that is has a page size of y
         if (pageSize != 0 && page != 0)
         {
-
+            if ((page - 1) * pageSize >= FilterItems.Count) 
+            {
+                throw new KeyNotFoundException("Page Size times the number of pages are too high");
+            }
             if (page * pageSize > FilterItems.Count)
             {
                 pageSize = FilterItems.Count - (pageSize - FilterItems.Count);
             }// determining if there are not enough items for there to be variables for the list, throw a error down if thats the case
-            if ((page - 1) * pageSize > FilterItems.Count) 
-            {
-                throw new KeyNotFoundException($"Page Size times the number of pages sre too high");
-            }
+            
+            
 
             FilterItems = FilterItems.Skip((page - 1) * pageSize).Take(pageSize).ToList(); // Filter will now change to display only that page
 
