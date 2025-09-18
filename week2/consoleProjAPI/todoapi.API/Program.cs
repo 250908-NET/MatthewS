@@ -1,5 +1,6 @@
 using Serilog; // logging library
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using todoapi.API.model;
 using todoapi.API.service;
 using todoapi.API.numnum;
@@ -9,7 +10,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
-
+// builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+// .AddJwtBearer(jwtOptions =>
+// {
+// 	jwtOptions.Authority = "https://{--your-authority--}";
+// 	jwtOptions.Audience = "https://{--your-audience--}";
+// });
 
 
 builder.Services.AddOpenApi();
@@ -129,6 +135,7 @@ app.MapDelete("/api/tasks/{id}", (ILogger<Program> logger,int id) => {
 
 app.UseHttpsRedirection();
 
+//app.UseAuthorization();
 
 app.Run();
 

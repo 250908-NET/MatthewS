@@ -44,3 +44,11 @@ C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\week2\consoleProjAPI\tod
 C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\week2\consoleProjAPI\todoapi.API\obj\Debug\net9.0\todoapi.API.pdb
 C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\week2\consoleProjAPI\todoapi.API\obj\Debug\net9.0\todoapi.API.genruntimeconfig.cache
 C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\week2\consoleProjAPI\todoapi.API\obj\Debug\net9.0\ref\todoapi.API.dll
+C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\week2\consoleProjAPI\todoapi.API\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\week2\consoleProjAPI\todoapi.API\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\week2\consoleProjAPI\todoapi.API\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\week2\consoleProjAPI\todoapi.API\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\week2\consoleProjAPI\todoapi.API\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\week2\consoleProjAPI\todoapi.API\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\week2\consoleProjAPI\todoapi.API\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\matth\Documents\RevFile\JosephMatthew\MatthewS\week2\consoleProjAPI\todoapi.API\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll

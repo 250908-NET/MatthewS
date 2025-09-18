@@ -57,25 +57,42 @@ public class DatabaseCollection : ICollectionFixture<DatabaseFixture>
     // ICollectionFixture<> interfaces.
 }
 [Collection("Api Database collection")]
-public class APItest : IClassFixture<WebApplicationFactory<Program>>
+public class APItest : IClassFixture<WebApplicationFactory<Program>>, IAsyncLifetime
 {
     private readonly DatabaseFixture _fixture;
     private readonly HttpClient _client;
-
+    private static bool _initialized = false;
+    private static readonly object _lock = new();
     public APItest(WebApplicationFactory<Program> factory, DatabaseFixture fixture)
     {
         _client = factory.CreateClient();
         _fixture = fixture;
-
     }
-    
-    public async Task InitializeTask()
+
+    public async Task InitializeAsync()
     {
+        if (_initialized) return;
+
+        lock (_lock)
+        {
+            if (_initialized) return;
+            _initialized = true;
+        }
+
         foreach (var task in _fixture.Db)
         {
             var url = $"/api/tasks?Description={Uri.EscapeDataString(task.Description)}&ListPriority={(int)task.ListPriority}&DueDate={task.DueDate}";
             var postResponse = await _client.PostAsJsonAsync(url, task.Title);
+            postResponse.EnsureSuccessStatusCode();
         }
+        var response = await _client.GetAsync("/api/tasks");
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+        Console.WriteLine("Response Body: " + apiResponse.data.Count);
+    }
+    public async Task DisposeAsync()
+    {
+        // No async cleanup needed for this test fixture
     }
 
 
@@ -84,21 +101,12 @@ public class APItest : IClassFixture<WebApplicationFactory<Program>>
     {
         // Given
 
-        var Tasks = _fixture.Db.Where(t => t.IsCompleted == false).ToList();
-        foreach (var task in _fixture.Db)
-        {
-            var url = $"/api/tasks?Description={Uri.EscapeDataString(task.Description)}&ListPriority={(int)task.ListPriority}&DueDate={task.DueDate}";
-            var postResponse = await _client.PostAsJsonAsync(url, task.Title);
-            postResponse.EnsureSuccessStatusCode();
-        }
+        var Tasks = _fixture.Db.ToList();
         Console.WriteLine("Tasks Count: " + Tasks.Count);
         var response = await _client.GetAsync("/api/tasks");
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse>();
 
         // Then
-        Console.WriteLine("Response: " + response);
-        Console.WriteLine("Response Body: " + apiResponse.data);
-
         response.EnsureSuccessStatusCode(); // Status Code 200-299
         apiResponse.data.Should().BeEquivalentTo(Tasks, options => options.Excluding(t => t.Id).Excluding(t => t.CreatedAt).Excluding(t => t.UpdatedAt).Excluding(t => t.DueDate));
         for (int i = 0; i < apiResponse.data.Count; i++)
@@ -119,14 +127,29 @@ public class APItest : IClassFixture<WebApplicationFactory<Program>>
             if the db size is equal or greater than (page-1) * pageSize
             this means there is no enough task for the selected page to exist
         */
-        var testResponse = await _client.GetAsync("/api/tasks");
-        var testApiResponse = await testResponse.Content.ReadFromJsonAsync<ApiResponse>();
+
         var response = await _client.GetAsync("/api/tasks?page=4&pageSize=4");
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
 
         response.EnsureSuccessStatusCode();
         apiResponse.errors.Should().BeEquivalentTo(ErrorStatus);
     }
-    public Task DisposeAsync() => Task.CompletedTask;
+    [Fact]
+    public async Task displayPage()
+    {
+        var Tasks = _fixture.Db.Skip((2 - 1) * 3).Take(3).ToList();
+
+        var response = await _client.GetAsync("/api/tasks?page=2&pageSize=3");
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+        response.EnsureSuccessStatusCode();
+        apiResponse.data.Should().BeEquivalentTo(Tasks, options => options.Excluding(t => t.Id).Excluding(t => t.CreatedAt).Excluding(t => t.UpdatedAt).Excluding(t => t.DueDate));
+        for (int i = 0; i < apiResponse.data.Count; i++)
+        {
+            Assert.Equal(Tasks[i].DueDate, apiResponse.data[i].DueDate, TimeSpan.FromSeconds(1));
+        }
+    }
+    
 
 }
