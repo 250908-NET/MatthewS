@@ -197,7 +197,7 @@ app.MapGet("/api/tasks", (ILogger<Program> logger,HttpContext httpContext,string
     List<string> Error = new List<string>(); 
     try // try the call to filteredDisplay
     {
-        return Results.Ok(new { success = true, data = toDoServices.filteredDisplay(title, description, completed, priority, dueBefore, page, pageSize, sorting ?? SortedBy.none), message = page == 0  ? "Tasks Retrieved" : $"page {page}" });
+        return Results.Ok(new { success = true, data = toDoServices.filteredDisplay(title, description, completed, priority, dueBefore, page, pageSize, sorting ?? SortedBy.none), message = page == 0  ? "Tasks Retrieved" : $"Tasks Retrieved. Page: {page}" });
     }
     catch (Exception e) // catches errors that happen in the FilterDisplay class and sends the error to the client
     {
@@ -248,10 +248,10 @@ app.MapPost("/api/tasks", (ILogger<Program> logger, HttpContext httpContext, [Fr
     }
 }).RequireAuthorization();
 // update changes of a seleted task, must have the id
-app.MapPut("/api/tasks/{id}", (ILogger<Program> logger,[FromBody] int id, string? title = null,string? Description = null,bool? completed = null,Priority? ListPriority = null,DateTime? DueDate = null) =>
+app.MapPut("/api/tasks/{id}", (ILogger<Program> logger,[FromBody] int id, string? title = null,string? Description = "",bool? completed = null,Priority? ListPriority = null,DateTime? DueDate = null) =>
 {
     List<string> Error = new List<string>();
-    if (Description.Length < 500) // Description can not be over 500 characters
+    if (Description.Length > 500) // Description can not be over 500 characters
     {
         Error.Add("Description is too long");
     }
