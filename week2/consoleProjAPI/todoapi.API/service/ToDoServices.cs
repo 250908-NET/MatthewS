@@ -14,6 +14,7 @@ public class ToDoServices : IToDoServices
 {
     private List<ToDoItem> toDoItems; // List of toDoItems
 
+
     private int id = 0;
 
     public ToDoServices()
@@ -32,7 +33,7 @@ public class ToDoServices : IToDoServices
         List <ToDoItem> FilterItems = toDoItems.Where((x) =>
         {
             // if all these variables are true, it is added to the list. Note: null means the user has not put something in meaning, he doesnt want that variable to be filtered
-            if ((completed == null || completed == x.IsCompleted) && (priority == null || priority == x.ListPriority) && (dueBefore == null || x.DueDate < dueBefore) && (title == null || x.Title.ToUpper().Contains(title.ToUpper())) && (description == null || x.Description.ToUpper().Contains(title.ToUpper())))
+            if ((completed == null || completed == x.IsCompleted) && (priority == null || priority == x.ListPriority) && (dueBefore == null || x.DueDate < dueBefore) && (title == null || x.Title.ToUpper().Contains(title.ToUpper())) && (description == null || x.Description.ToUpper().Contains(description.ToUpper())))
             {
                 return true;
             }
@@ -59,18 +60,21 @@ public class ToDoServices : IToDoServices
         // if pages are implemented, only display page x that is has a page size of y
         if (pageSize != 0 && page != 0)
         {
-            if ((page - 1) * pageSize >= FilterItems.Count) 
+            int lastPage;
+            if ((page - 1) * pageSize >= FilterItems.Count)
             {
                 throw new KeyNotFoundException("Page Size times the number of pages are too high");
             }
             if (page * pageSize > FilterItems.Count)
             {
-                pageSize = FilterItems.Count - (pageSize - FilterItems.Count);
+                lastPage = (FilterItems.Count % pageSize);
+                FilterItems = FilterItems.Skip((page - 1) * pageSize).Take(lastPage).ToList();
             }// determining if there are not enough items for there to be variables for the list, throw a error down if thats the case
+            else
+            {
+                FilterItems = FilterItems.Skip((page - 1) * pageSize).Take(pageSize).ToList();// Filter will now change to display only that page
+            }
             
-            
-
-            FilterItems = FilterItems.Skip((page - 1) * pageSize).Take(pageSize).ToList(); // Filter will now change to display only that page
 
         }
         return FilterItems;

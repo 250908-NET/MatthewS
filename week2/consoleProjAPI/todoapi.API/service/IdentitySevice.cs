@@ -19,7 +19,7 @@ public class IdentityService(JwtConfiguration config)
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Name, user.UserName), // Example subject ID
+            new Claim(JwtRegisteredClaimNames.Name, user.UserName), 
             new Claim(JwtRegisteredClaimNames.Sub,user.userId.ToString())
         };
 

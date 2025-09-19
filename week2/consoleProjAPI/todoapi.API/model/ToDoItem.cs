@@ -43,7 +43,7 @@ public class ToDoItem : ToDoItemBase
         this.IsCompleted = false;
         this.Description = Description;
         this.DueDate = DueDate;
-        this.ListPriority = Priority.Medium;
+        this.ListPriority = ListPriority;
         this.CreatedAt = DateTime.Now;
         this.UpdatedAt = DateTime.Now;
 

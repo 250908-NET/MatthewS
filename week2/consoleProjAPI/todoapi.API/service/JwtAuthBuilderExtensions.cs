@@ -13,8 +13,6 @@ public static class JwtAuthBuilderExtensions
 {
     public static AuthenticationBuilder AddJwtAuthentication(this IServiceCollection services, JwtConfiguration jwtConfiguration)
     {
-        services.AddAuthorization();
-        Console.WriteLine(" I have arrived");
         return services.AddAuthentication(JwtOptions =>
         {
             JwtOptions.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
